@@ -70,7 +70,7 @@ ui <- navbarPage(
   title = div(
     tags$head(tags$base(href = "/app/")),  # 👈 ajoute ça
     tags$img(src = "logo.png", height = 24, onerror="this.style.display='none'"),
-    HTML("&nbsp;Finance Dashboard")
+    HTML("Finance Dashboard")
   ),
   header = tagList(
     tags$link(rel="stylesheet", type="text/css", href="styles.css"),
@@ -82,7 +82,7 @@ ui <- navbarPage(
     div(class="layout",
         # Sidebar custom
         div(class="sidebar",
-            h4("Filtres"),
+            h4("Filtres dynamiques"),
             dateRangeInput("dater", "Période", start = min(fin_data$date), end = max(fin_data$date)),
             selectInput("region", "Région", choices = c("Toutes", sort(unique(fin_data$region))), selected = "Toutes"),
             selectInput("category", "Catégorie", choices = c("Toutes", sort(unique(fin_data$category))), selected = "Toutes"),
