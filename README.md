@@ -24,8 +24,9 @@ sudo apt update && sudo apt upgrade -y
 # Installer R
 sudo apt install -y r-base
 
-# Lancer une session root R pour installer Shiny
-sudo su - -c "R -e "install.packages('shiny', repos='https://cloud.r-project.org/')""
+# Lancer une session root R pour installer et les packages associés
+
+sudo su - -c "R -e \"install.packages(c('shiny','plotly','DT','readr','dplyr','tidyr','lubridate','scales','cachem','digest'), repos='https://cloud.r-project.org/')\""
 
 # Télécharger Shiny Server
 wget https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
@@ -35,20 +36,6 @@ sudo apt install -y gdebi-core
 sudo gdebi shiny-server-1.5.20.1002-amd64.deb
 ```
 
----
-
-## 📦 3. Installer les packages R que vous utilisez
-
-Selon le contenu de votre `app.R`, installez les packages nécessaires :
-
-```r
-install.packages(c(
-  "shiny","plotly","DT","readr","dplyr","tidyr",
-  "lubridate","scales","cachem","digest"
-), repos = "https://cloud.r-project.org/")
-```
-
----
 
 ## 🌐 4. Configurer Nginx et HTTPS (Nom de domaine)
 
