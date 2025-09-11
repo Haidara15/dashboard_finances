@@ -1,107 +1,141 @@
-# 📊 Déploiement automatique d'une application Shiny en production
+# 🚀 Déploiement d'une Application Shiny avec Pipeline Git
 
-Ce guide explique comment configurer **un pipeline de déploiement automatisé** pour une application [Shiny](https://shiny.posit.co/) sur un **serveur Ubuntu avec Nginx + HTTPS**.  
-Il permet de **déployer automatiquement une app** hébergée sur GitHub via une simple commande (ou un push Git, si vous allez plus loin).
+Ce guide vous explique comment configurer un serveur Linux pour héberger et déployer automatiquement une application Shiny depuis GitHub. Le pipeline permet de :
 
----
-
-## 🚀 Fonctionnalités
-
-- Déploiement automatique depuis GitHub (`git clone`)
-- Redémarrage du serveur `shiny-server`
-- Configuration Nginx avec HTTPS (via Let's Encrypt)
-- Script `deploy_from_git.sh` clé en main
-- Prise en charge des dépendances R
+- Déployer automatiquement votre app après un `git push`
+- Redémarrer Shiny Server à chaque mise à jour
+- Gérer les permissions et structure proprement
 
 ---
 
-## 🧱 Prérequis
+## 🧱 1. Prérequis sur le serveur
 
-- Ubuntu (testé sur Ubuntu 22.04)
-- Droits `sudo`
-- Serveur accessible via `nom-de-domaine` (ex: `example.com`)
-- Application Shiny stockée sur GitHub
-
----
-
-## ⚙️ 1. Installation des composants de base
-
-### 📦 Mise à jour système
+Avant tout, assurez-vous d'avoir un VPS ou une machine avec Ubuntu (22.04 par ex.) et accès SSH.
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
-### 🐍 Installer R
-
-```bash
-sudo apt install -y r-base
-```
-
-### 💡 Installer les packages nécessaires à l'application
-
-Créez un fichier `packages.R` contenant ceci si besoin :
-
-```r
-packages <- c("shiny", "plotly", "DT", "readr", "dplyr", "tidyr", "lubridate", "scales", "cachem", "digest")
-install.packages(setdiff(packages, rownames(installed.packages())), repos = "https://cloud.r-project.org/")
-```
-
-Puis lancez :
-
-```bash
-sudo su - -c "Rscript packages.R"
-```
-
 ---
 
-### 💡 Installer Shiny Server
+## 🛠️ 2. Installer R et Shiny Server
 
 ```bash
-sudo apt install -y gdebi-core
+# Installer R
+sudo apt install -y r-base
+
+# Lancer une session root R pour installer Shiny
+sudo su - -c "R -e "install.packages('shiny', repos='https://cloud.r-project.org/')""
+
+# Télécharger Shiny Server
 wget https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
+
+# Installer via gdebi (gère les dépendances)
+sudo apt install -y gdebi-core
 sudo gdebi shiny-server-1.5.20.1002-amd64.deb
 ```
 
 ---
 
-## 🌐 2. Configurer Nginx avec HTTPS
+## 📦 3. Installer les packages R utilisés dans votre app
 
-### 🌐 Installation de Nginx
+Selon le contenu de votre `app.R`, installez les packages nécessaires :
 
-```bash
-sudo apt install -y nginx
+```r
+install.packages(c(
+  "shiny","plotly","DT","readr","dplyr","tidyr",
+  "lubridate","scales","cachem","digest"
+), repos = "https://cloud.r-project.org/")
 ```
-
-### 🔒 Certificat SSL gratuit avec Let's Encrypt
-
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d example.com -d www.example.com
-```
-
-🛡️ Cela configure automatiquement un certificat SSL.
 
 ---
 
-## 🛠️ 3. Script de déploiement automatique
+## 🌐 4. Configurer Nginx et HTTPS (Nom de domaine)
 
-### 📄 Créez `deploy_from_git.sh`
+```bash
+sudo apt install nginx certbot python3-certbot-nginx
+```
+
+Créer un fichier de configuration Nginx :
+
+```bash
+sudo nano /etc/nginx/sites-available/mondomaine.fr
+```
+
+Contenu (à adapter) :
+
+```nginx
+server {
+  listen 80;
+  server_name mondomaine.fr www.mondomaine.fr;
+  location / {
+    proxy_pass http://127.0.0.1:3838;
+    proxy_redirect http://127.0.0.1:3838/ $scheme://$host/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 20d;
+    proxy_buffering off;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+}
+```
+
+Activer et tester :
+
+```bash
+sudo ln -s /etc/nginx/sites-available/mondomaine.fr /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Activer HTTPS avec Let's Encrypt :
+
+```bash
+sudo certbot --nginx -d mondomaine.fr -d www.mondomaine.fr
+```
+
+---
+
+## 🔐 5. Clé SSH pour GitHub (authentification sans mot de passe)
+
+Générer une clé SSH :
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "you@example.com"
+```
+
+Appuyez sur Entrée pour accepter le chemin proposé (`/home/USER/.ssh/id_rsa`).
+
+Afficher la clé publique :
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+Copier cette clé dans GitHub > Settings > SSH and GPG keys > **New SSH key**
+
+---
+
+## 🚀 6. Créer le script de déploiement
+
+Créer un fichier `deploy_from_git.sh` dans le home :
 
 ```bash
 nano ~/deploy_from_git.sh
 ```
 
-Collez :
+Contenu :
 
 ```bash
 #!/bin/bash
 
-set -e
+set -e  # Stop si erreur
 
-APP_NAME="your-app-name"
+APP_NAME="App-name"
 DEPLOY_DIR="/srv/shiny-server/apps/app"
-GIT_REPO="git@github.com:your-github-username/${APP_NAME}.git"
+GIT_REPO="git@github.com:VOTRE_USER/${APP_NAME}.git"
 TMP_DIR="/tmp/${APP_NAME}_deploy"
 
 echo "==> Déploiement de ${APP_NAME}..."
@@ -114,7 +148,6 @@ sudo mkdir -p "$DEPLOY_DIR"
 sudo cp -r "$TMP_DIR"/* "$DEPLOY_DIR"
 
 sudo ln -sfn "$DEPLOY_DIR" "$DEPLOY_DIR/current"
-
 sudo chown -R shiny:shiny "$DEPLOY_DIR"
 sudo chmod -R 755 "$DEPLOY_DIR"
 
@@ -132,107 +165,39 @@ chmod +x ~/deploy_from_git.sh
 
 ---
 
-## 🔐 4. Configuration de la clé SSH GitHub (si repo privé)
+## ✅ 7. Utilisation
 
-### Générer la clé (si besoin)
-
-```bash
-ssh-keygen -t rsa -b 4096 -C "votre_email@example.com"
-```
-
-Laissez le chemin par défaut (`/home/your_user/.ssh/id_rsa`), puis :
+À chaque modification de votre app :
 
 ```bash
-cat ~/.ssh/id_rsa.pub
-```
-
-➡️ Copiez cette **clé publique** dans votre GitHub :  
-GitHub → Settings → **SSH and GPG keys** → **New SSH key**
-
----
-
-## 🌐 5. Configurer le domaine Nginx
-
-Créer le fichier :
-
-```bash
-sudo nano /etc/nginx/sites-available/example.com
-```
-
-Avec :
-
-```nginx
-server {
-    listen 80;
-    server_name example.com www.example.com;
-
-    location /app/ {
-        proxy_pass http://127.0.0.1:3838/app/;
-        proxy_redirect http://127.0.0.1:3838/ $scheme://$host/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-Puis activez-le :
-
-```bash
-sudo ln -s /etc/nginx/sites-available/example.com /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
----
-
-## 🚀 6. Déploiement de votre application
-
-À chaque fois que vous poussez du code sur GitHub :
-
-```bash
+# En local
 git add .
-git commit -m "Mise à jour"
+git commit -m "modification"
 git push
-```
 
-Puis sur le serveur :
-
-```bash
+# Sur le serveur
 ~/deploy_from_git.sh
 ```
 
 ---
 
-## ✅ Exemple d'accès à l'app
+## 📁 Structure recommandée
 
-https://www.example.com/app/
+Le dossier `/srv/shiny-server/apps/app` contiendra :
 
----
-
-## 🧼 Bonnes pratiques
-
-- Ne jamais exposer vos clés privées (`id_rsa`)
-- Utiliser des repos privés si l’application est sensible
-- Automatiser le déclenchement avec un webhook (optionnel)
-- Sauvegarder régulièrement le serveur
-
----
-
-## ✨ Bonus : Automatisation complète (facultatif)
-
-Configurer un **GitHub webhook** ou une **GitHub Action** pour appeler automatiquement le script `deploy_from_git.sh` via SSH ou webhook à chaque `git push`.
+```txt
+app/
+├── app.R
+├── data/
+│   └── finances.csv
+├── www/
+│   ├── styles.css
+│   └── app.js
+└── current -> lien symbolique (facultatif)
+```
 
 ---
 
-## 🛡️ Avertissement
+## 📘 Licence
 
-⚠️ **Ne publiez jamais vos clés SSH privées, mots de passe, ou certificats SSL**.
-
----
-
-## 🧑‍💻 Auteur
-
-[Votre nom ou pseudo GitHub]
+Ce projet est open-source et sous licence MIT. Vous êtes libre de le modifier ou le redistribuer.
