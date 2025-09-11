@@ -37,7 +37,7 @@ sudo gdebi shiny-server-1.5.20.1002-amd64.deb
 ```
 
 
-## 🌐 4. Configurer Nginx et HTTPS (Nom de domaine)
+## 🌐 3. Configurer Nginx et HTTPS (Nom de domaine)
 
 ```bash
 sudo apt install nginx certbot python3-certbot-nginx
@@ -85,7 +85,7 @@ sudo certbot --nginx -d mondomaine.fr -d www.mondomaine.fr
 
 ---
 
-## 🔐 5. Clé SSH pour GitHub (authentification sans mot de passe)
+## 🔐 4. Clé SSH pour GitHub (authentification sans mot de passe)
 
 Générer une clé SSH :
 
@@ -105,7 +105,7 @@ Copier cette clé dans GitHub > Settings > SSH and GPG keys > **New SSH key**
 
 ---
 
-## 🚀 6. Créer le script de déploiement
+## 🚀 5. Créer le script de déploiement
 
 Créer un fichier `deploy_from_git.sh` dans le home :
 
@@ -152,7 +152,7 @@ chmod +x ~/deploy_from_git.sh
 
 ---
 
-## ✅ 7. Utilisation
+## ✅ 6. Utilisation
 
 À chaque modification de votre app :
 
