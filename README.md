@@ -1,4 +1,4 @@
-# 🚀 Déploiement d'une Application Shiny avec Pipeline Git
+# 🚀 Automatiser le Déploiement CI/CD d'une Application Shiny avec Git et Nginx
 
 Ce guide vous explique comment configurer un serveur Linux pour héberger et déployer automatiquement une application Shiny depuis GitHub. Le pipeline permet de :
 
@@ -10,7 +10,7 @@ Ce guide vous explique comment configurer un serveur Linux pour héberger et dé
 
 ## 🧱 1. Prérequis sur le serveur
 
-Avant tout, assurez-vous d'avoir un VPS ou une machine avec Ubuntu (22.04 par ex.) et accès SSH.
+Disposer d'un VPS ou une machine avec Ubuntu (22.04 par ex.) et accès SSH.
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -37,7 +37,7 @@ sudo gdebi shiny-server-1.5.20.1002-amd64.deb
 
 ---
 
-## 📦 3. Installer les packages R utilisés dans votre app
+## 📦 3. Installer les packages R que vous utilisez
 
 Selon le contenu de votre `app.R`, installez les packages nécessaires :
 
@@ -62,7 +62,7 @@ Créer un fichier de configuration Nginx :
 sudo nano /etc/nginx/sites-available/mondomaine.fr
 ```
 
-Contenu (à adapter) :
+Contenu à adapter :
 
 ```nginx
 server {
@@ -197,7 +197,3 @@ app/
 ```
 
 ---
-
-## 📘 Licence
-
-Ce projet est open-source et sous licence MIT. Vous êtes libre de le modifier ou le redistribuer.
