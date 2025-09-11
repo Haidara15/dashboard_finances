@@ -1,107 +1,139 @@
-# 📊 Déploiement automatique d'une application Shiny en production
 
-Ce guide explique comment configurer **un pipeline de déploiement automatisé** pour une application [Shiny](https://shiny.posit.co/) sur un **serveur Ubuntu avec Nginx + HTTPS**.  
-Il permet de **déployer automatiquement une app** hébergée sur GitHub via une simple commande (ou un push Git, si vous allez plus loin).
+# 🚀 Déploiement automatique d'une application Shiny avec Git & Nginx
 
----
-
-## 🚀 Fonctionnalités
-
-- Déploiement automatique depuis GitHub (`git clone`)
-- Redémarrage du serveur `shiny-server`
-- Configuration Nginx avec HTTPS (via Let's Encrypt)
-- Script `deploy_from_git.sh` clé en main
-- Prise en charge des dépendances R
+Ce guide explique comment configurer un serveur Ubuntu pour déployer automatiquement une application **Shiny** hébergée sur GitHub.
 
 ---
 
-## 🧱 Prérequis
+## 🧰 Prérequis
 
-- Ubuntu (testé sur Ubuntu 22.04)
-- Droits `sudo`
-- Serveur accessible via `nom-de-domaine` (ex: `example.com`)
-- Application Shiny stockée sur GitHub
+- Un serveur Ubuntu (ex: VPS)
+- Un nom de domaine (ex: `m-haidara.fr`)
+- Un dépôt GitHub contenant votre application (`app.R`, `www/`, `data/`, etc.)
+- Une clé SSH configurée pour accéder à votre repo
 
 ---
 
-## ⚙️ 1. Installation des composants de base
-
-### 📦 Mise à jour système
+## ⚙️ 1. Installation des dépendances système
 
 ```bash
 sudo apt update && sudo apt upgrade -y
+sudo apt install -y r-base gdebi-core nginx git curl ufw
 ```
 
-### 🐍 Installer R
+---
+
+## 📦 2. Installation de R et des packages nécessaires
 
 ```bash
 sudo apt install -y r-base
 ```
 
-### 💡 Installer les packages nécessaires à l'application
-
-Créez un fichier `packages.R` contenant ceci si besoin :
-
-```r
-packages <- c("shiny", "plotly", "DT", "readr", "dplyr", "tidyr", "lubridate", "scales", "cachem", "digest")
-install.packages(setdiff(packages, rownames(installed.packages())), repos = "https://cloud.r-project.org/")
-```
-
-Puis lancez :
+Puis installez `shiny` et les autres packages nécessaires :
 
 ```bash
-sudo su - -c "Rscript packages.R"
+sudo su - -c "R -e "install.packages(c('shiny','plotly','DT','readr','dplyr','tidyr','lubridate','scales','cachem','digest'), repos='https://cloud.r-project.org/')""
+```
+
+### 👉 Option recommandée : fichier `packages.R`
+
+Créez un fichier `packages.R` à la racine de votre dépôt GitHub :
+
+```r
+# packages.R
+packages <- c("shiny", "plotly", "DT", "readr", "dplyr", "tidyr", "lubridate", "scales", "cachem", "digest")
+
+install_if_missing <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, repos = "https://cloud.r-project.org")
+  }
+}
+
+invisible(lapply(packages, install_if_missing))
+```
+
+👉 **Emplacement recommandé** : `/srv/shiny-server/apps/app/packages.R`
+
+Exécution manuelle (ou dans votre script) :
+
+```bash
+sudo su - -c "Rscript /srv/shiny-server/apps/app/packages.R"
 ```
 
 ---
 
-### 💡 Installer Shiny Server
+## 🌐 3. Installation de Shiny Server
 
 ```bash
-sudo apt install -y gdebi-core
-wget https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
+wget https://download3.rstudio.org/ubuntu-20.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
 sudo gdebi shiny-server-1.5.20.1002-amd64.deb
 ```
 
----
-
-## 🌐 2. Configurer Nginx avec HTTPS
-
-### 🌐 Installation de Nginx
+Vérification :
 
 ```bash
-sudo apt install -y nginx
+sudo systemctl status shiny-server
 ```
-
-### 🔒 Certificat SSL gratuit avec Let's Encrypt
-
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d example.com -d www.example.com
-```
-
-🛡️ Cela configure automatiquement un certificat SSL.
 
 ---
 
-## 🛠️ 3. Script de déploiement automatique
+## 🌍 4. Configuration Nginx pour reverse proxy + HTTPS
 
-### 📄 Créez `deploy_from_git.sh`
+### Exemple de fichier : `/etc/nginx/sites-available/m-haidara.fr`
 
-```bash
-nano ~/deploy_from_git.sh
+```nginx
+server {
+    listen 80;
+    server_name m-haidara.fr www.m-haidara.fr;
+    location / {
+        proxy_pass http://127.0.0.1:3838/;
+        proxy_redirect http://127.0.0.1:3838/ $scheme://$host/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 20d;
+    }
+}
 ```
 
-Collez :
+### Activer le site et recharger Nginx
+
+```bash
+sudo ln -s /etc/nginx/sites-available/m-haidara.fr /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+## 🔐 5. Certificat SSL avec Let's Encrypt (HTTPS)
+
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d m-haidara.fr -d www.m-haidara.fr
+```
+
+Vérifiez que le renouvellement automatique fonctionne :
+
+```bash
+sudo certbot renew --dry-run
+```
+
+---
+
+## 🚀 6. Script de déploiement automatique
+
+Fichier : `~/deploy_from_git.sh`
 
 ```bash
 #!/bin/bash
 
-set -e
+set -e  # Stop on error
 
-APP_NAME="your-app-name"
+APP_NAME="shinyFinances"
 DEPLOY_DIR="/srv/shiny-server/apps/app"
-GIT_REPO="git@github.com:your-github-username/${APP_NAME}.git"
+GIT_REPO="git@github.com:Haidara15/${APP_NAME}.git"
 TMP_DIR="/tmp/${APP_NAME}_deploy"
 
 echo "==> Déploiement de ${APP_NAME}..."
@@ -113,11 +145,14 @@ sudo rm -rf "$DEPLOY_DIR"
 sudo mkdir -p "$DEPLOY_DIR"
 sudo cp -r "$TMP_DIR"/* "$DEPLOY_DIR"
 
+# Recrée le lien symbolique vers 'current'
 sudo ln -sfn "$DEPLOY_DIR" "$DEPLOY_DIR/current"
 
+# Droits
 sudo chown -R shiny:shiny "$DEPLOY_DIR"
 sudo chmod -R 755 "$DEPLOY_DIR"
 
+# Redémarre le serveur
 echo "🔄 Redémarrage de Shiny Server..."
 sudo systemctl restart shiny-server
 
@@ -132,69 +167,13 @@ chmod +x ~/deploy_from_git.sh
 
 ---
 
-## 🔐 4. Configuration de la clé SSH GitHub (si repo privé)
+## 🔁 7. Cycle de mise à jour d'une app
 
-### Générer la clé (si besoin)
-
-```bash
-ssh-keygen -t rsa -b 4096 -C "votre_email@example.com"
-```
-
-Laissez le chemin par défaut (`/home/your_user/.ssh/id_rsa`), puis :
-
-```bash
-cat ~/.ssh/id_rsa.pub
-```
-
-➡️ Copiez cette **clé publique** dans votre GitHub :  
-GitHub → Settings → **SSH and GPG keys** → **New SSH key**
-
----
-
-## 🌐 5. Configurer le domaine Nginx
-
-Créer le fichier :
-
-```bash
-sudo nano /etc/nginx/sites-available/example.com
-```
-
-Avec :
-
-```nginx
-server {
-    listen 80;
-    server_name example.com www.example.com;
-
-    location /app/ {
-        proxy_pass http://127.0.0.1:3838/app/;
-        proxy_redirect http://127.0.0.1:3838/ $scheme://$host/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-Puis activez-le :
-
-```bash
-sudo ln -s /etc/nginx/sites-available/example.com /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
----
-
-## 🚀 6. Déploiement de votre application
-
-À chaque fois que vous poussez du code sur GitHub :
+À chaque fois que vous modifiez votre app localement :
 
 ```bash
 git add .
-git commit -m "Mise à jour"
+git commit -m "modification"
 git push
 ```
 
@@ -204,14 +183,7 @@ Puis sur le serveur :
 ~/deploy_from_git.sh
 ```
 
----
-
-## ✅ Exemple d'accès à l'app
-
-https://www.example.com/app/
+C’est tout !
 
 ---
-
-
-
 
