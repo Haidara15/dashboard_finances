@@ -29,11 +29,15 @@ sudo apt install -y r-base
 sudo su - -c "R -e \"install.packages(c('shiny','plotly','DT','readr','dplyr','tidyr','lubridate','scales','cachem','digest'), repos='https://cloud.r-project.org/')\""
 
 # Télécharger Shiny Server
+
 wget https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
 
 # Installer via gdebi (gère les dépendances)
+
 sudo apt install -y gdebi-core
+
 sudo gdebi shiny-server-1.5.20.1002-amd64.deb
+
 ```
 
 
