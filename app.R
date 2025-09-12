@@ -68,7 +68,6 @@ kpis <- function(df) {
 # ==== UI (shiny de base + CSS/JS via www/) ====
 ui <- navbarPage(
   title = div(
-    tags$head(tags$base(href = "/app/")),  # 👈 ajoute ça
     tags$img(src = "logo.png", height = 24, onerror="this.style.display='none'"),
     HTML("Finance Dashboard")
   ),
