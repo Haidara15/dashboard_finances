@@ -21,22 +21,24 @@ sudo apt update && sudo apt upgrade -y
 ## 🛠️ 2. Installer R et Shiny Server
 
 ```bash
+# Mettre à jour les paquets
+sudo apt update && sudo apt upgrade -y
+
 # Installer R
 sudo apt install -y r-base
 
-# Lancer une session root R pour installer et les packages associés
-
+# Installer les packages R nécessaires à ton app (Shiny + dépendances)
 sudo su - -c "R -e \"install.packages(c('shiny','plotly','DT','readr','dplyr','tidyr','lubridate','scales','cachem','digest'), repos='https://cloud.r-project.org/')\""
 
-# Télécharger Shiny Server
+# Télécharger la version récente de Shiny Server (compatible Ubuntu 20.04 / 22.04)
+wget https://download3.rstudio.org/ubuntu-20.04/x86_64/shiny-server-1.5.23.1030-amd64.deb
 
-wget https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
-
-# Installer via gdebi (gère les dépendances)
-
+# Installer gdebi si pas encore installé
 sudo apt install -y gdebi-core
 
-sudo gdebi shiny-server-1.5.20.1002-amd64.deb
+# Installer Shiny Server via gdebi (gère les dépendances automatiquement)
+sudo gdebi shiny-server-1.5.23.1030-amd64.deb
+
 
 ```
 
