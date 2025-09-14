@@ -75,7 +75,7 @@ ui <- navbarPage(
     "Dashboard",
     div(class = "layout",
         div(class = "sidebar",
-            h4("Effectuez vos filtres dynamiquement :"),
+            h4("Effectuez vos filtres :"),
             dateRangeInput("dater", "Période", start = min(fin_data$date), end = max(fin_data$date)),
             selectInput("region", "Région", choices = c("Toutes", sort(unique(fin_data$region))), selected = "Toutes"),
             selectInput("category", "Catégorie", choices = c("Toutes", sort(unique(fin_data$category))), selected = "Toutes"),
