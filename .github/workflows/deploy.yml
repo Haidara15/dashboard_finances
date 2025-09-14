@@ -10,27 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupération du code
       - name: 📂 Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Connexion à GitHub Container Registry (GHCR)
       - name: 🔑 Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # 3. Build de l'image Docker
       - name: 🛠 Build Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/shinyfinances:latest
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$OWNER/shinyfinances:latest
+          echo "Building image: $IMAGE_NAME"
           docker build -t $IMAGE_NAME .
 
-      # 4. Push de l'image sur GHCR
       - name: 📤 Push Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/shinyfinances:latest
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$OWNER/shinyfinances:latest
+          echo "Pushing image: $IMAGE_NAME"
           docker push $IMAGE_NAME
 
-      # 5. Déploiement sur le VPS
       - name: 🚀 Deploy on VPS
         uses: appleboy/ssh-action@v1.1.0
         with:
@@ -38,7 +37,8 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/shinyfinances:latest
+            OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME=ghcr.io/$OWNER/shinyfinances:latest
             echo "📥 Pull de l'image sur le VPS..."
             docker pull $IMAGE_NAME
 
