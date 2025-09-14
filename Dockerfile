@@ -16,16 +16,13 @@ RUN R -e "remotes::install_cran(c( \
     'lubridate', 'scales', 'cachem', 'digest' \
   ))"
 
-# Créer le dossier de ton app dans le conteneur
-RUN mkdir -p /srv/shiny-server/shinyfinances
+# Supprimer tout le contenu par défaut de Shiny Server
+RUN rm -rf /srv/shiny-server/*
 
-# Copier ton application dans le conteneur
+# Copier uniquement ton application
 COPY . /srv/shiny-server/shinyfinances
 
-# Supprimer la page d'accueil par défaut
-RUN rm -rf /srv/shiny-server/index.html
-
-# Donner les bons droits à l'utilisateur shiny
+# Donner les bons droits
 RUN chown -R shiny:shiny /srv/shiny-server
 
 # Exposer le port Shiny
