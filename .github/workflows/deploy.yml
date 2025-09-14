@@ -10,24 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Récupération du code
       - name: 📂 Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Connexion à GitHub Container Registry avec ton PAT
       - name: 🔑 Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u Haidara15 --password-stdin
 
+      # 3. Build de l'image Docker
       - name: 🛠 Build Docker image
         run: |
           IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
           echo "Building image: $IMAGE_NAME"
           docker build -t $IMAGE_NAME .
 
+      # 4. Push de l'image vers GHCR
       - name: 📤 Push Docker image
         run: |
           IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
           echo "Pushing image: $IMAGE_NAME"
           docker push $IMAGE_NAME
 
+      # 5. Déploiement sur le VPS
       - name: 🚀 Deploy on VPS
         uses: appleboy/ssh-action@v1.1.0
         with:
