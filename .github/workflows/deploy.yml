@@ -21,4 +21,4 @@ jobs:
       - name: Deploy on VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "~/deploy_from_git.sh shinyFinances"
+            "~/deploiement_app_finances.sh shinyFinances"
