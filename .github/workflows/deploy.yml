@@ -18,15 +18,13 @@ jobs:
 
       - name: 🛠 Build Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
-          IMAGE_NAME=$(echo $IMAGE_NAME | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
           echo "Building image: $IMAGE_NAME"
           docker build -t $IMAGE_NAME .
 
       - name: 📤 Push Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
-          IMAGE_NAME=$(echo $IMAGE_NAME | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
           echo "Pushing image: $IMAGE_NAME"
           docker push $IMAGE_NAME
 
@@ -37,8 +35,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
-            IMAGE_NAME=$(echo $IMAGE_NAME | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
             echo "📥 Pull de l'image sur le VPS..."
             docker pull $IMAGE_NAME
 
