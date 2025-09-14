@@ -1,4 +1,4 @@
-# 🚀 Automatiser le Déploiement CI/CD d'une Application Shiny avec Git et Nginx
+# 🚀 Automatiser le Déploiement CI/CD d'une Application Shiny avec Git et Nginx (modifications)
 
 Ce guide vous explique comment configurer un serveur Linux pour héberger et déployer automatiquement une application Shiny depuis GitHub. Le pipeline permet de :
 
