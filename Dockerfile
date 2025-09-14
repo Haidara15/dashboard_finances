@@ -19,8 +19,8 @@ RUN R -e "remotes::install_cran(c( \
 # Supprimer tout le contenu par défaut de Shiny Server
 RUN rm -rf /srv/shiny-server/*
 
-# Copier uniquement ton application
-COPY . /srv/shiny-server/shinyfinances
+# Copier ton application directement à la racine
+COPY . /srv/shiny-server/
 
 # Donner les bons droits
 RUN chown -R shiny:shiny /srv/shiny-server
