@@ -71,6 +71,8 @@ ui <- navbarPage(
     tags$script(src="app.js")
   ),
   
+  h1("Application R shiny sur les données financières",style="text-align:center;"),
+  
   tabPanel(
     "Dashboard",
     div(class = "layout",
