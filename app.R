@@ -71,7 +71,7 @@ ui <- navbarPage(
     tags$script(src="app.js")
   ),
   
-  h1("Application de datavisualisation sur les données financières",style="text-align:center;"),
+  #h1("Application de datavisualisation sur les données financières",style="text-align:center;"),
   
   tabPanel(
     "Dashboard",
