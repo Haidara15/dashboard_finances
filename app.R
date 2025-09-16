@@ -73,7 +73,7 @@ ui <- navbarPage(
   
   h1("Analyse des données financières",
      
-     style="text-align:center;padding:15px 15px;background-color:#51A2FF;border-radius:10px;"),
+     style="text-align:center;padding:15px 15px;background-color:#ccc;border-radius:10px;"),
   
   tabPanel(
     "Dashboard",
