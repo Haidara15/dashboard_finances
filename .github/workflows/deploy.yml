@@ -19,7 +19,7 @@ jobs:
       - name: 🛠 Build Docker image (no cache)
         run: |
           IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
-          echo "Building image without cache: $IMAGE_NAME"
+          echo "Building image (no cache): $IMAGE_NAME"
           docker build --no-cache -t $IMAGE_NAME .
 
       - name: 📤 Push Docker image
