@@ -73,7 +73,7 @@ ui <- navbarPage(
   
   h1("Analyse des données financières",
      
-     style="text-align:center;padding:15px 15px;background-color:#ccc;border-radius:10px;"),
+     style="text-align:center;padding:15px 15px;background-color:#51A2FF;border-radius:10px;"),
   
   tabPanel(
     "Dashboard",
@@ -91,10 +91,10 @@ ui <- navbarPage(
         ),
         div(class = "content",
             div(class = "kpi-row",
-                div(class = "kpi", h6("Revenus"),  textOutput("kpi_rev")),
+                div(class = "kpi",h6("Revenus"),  textOutput("kpi_rev")),
                 div(class = "kpi", h6("Dépenses"), textOutput("kpi_exp")),
                 div(class = "kpi", h6("Marge brute"), textOutput("kpi_gp")),
-                div(class = "kpi", h6("Taux de marge"), textOutput("kpi_margin"))
+                div(class = "kpi",h6("Taux de marge"), textOutput("kpi_margin"))
             ),
             div(class = "row-2",
                 div(class = "card", plotlyOutput("ts_revenue", height = "360px")),
