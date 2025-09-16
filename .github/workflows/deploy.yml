@@ -16,11 +16,11 @@ jobs:
       - name: 🔑 Login to GitHub Container Registry
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u Haidara15 --password-stdin
 
-      - name: 🛠 Build Docker image
+      - name: 🛠 Build Docker image (no cache)
         run: |
           IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
-          echo "Building image: $IMAGE_NAME"
-          docker build -t $IMAGE_NAME .
+          echo "Building image (no cache): $IMAGE_NAME"
+          docker build --no-cache -t $IMAGE_NAME .
 
       - name: 📤 Push Docker image
         run: |
