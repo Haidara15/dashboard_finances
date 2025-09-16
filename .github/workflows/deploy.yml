@@ -10,48 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupération du code
       - name: 📂 Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Connexion à GitHub Container Registry avec ton PAT
       - name: 🔑 Login to GitHub Container Registry
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u Haidara15 --password-stdin
 
-      # 3. Build de l'image Docker
       - name: 🛠 Build Docker image
         run: |
           IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
           echo "Building image: $IMAGE_NAME"
           docker build -t $IMAGE_NAME .
 
-      # 4. Push de l'image vers GHCR
       - name: 📤 Push Docker image
         run: |
           IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
           echo "Pushing image: $IMAGE_NAME"
           docker push $IMAGE_NAME
 
-      # 5. Déploiement sur le VPS
-      - name: 🚀 Deploy on VPS
+      - name: 🚀 Deploy on VPS (Blue-Green)
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            IMAGE_NAME=ghcr.io/haidara15/shinyfinances:latest
-            echo "📥 Pull de l'image sur le VPS..."
-            docker pull $IMAGE_NAME
-
-            echo "🛑 Arrêt de l'ancien conteneur (si existe)..."
-            docker stop shinyfinances || true
-            docker rm shinyfinances || true
-
-            echo "🚀 Lancement du nouveau conteneur..."
-            docker run -d \
-              --name shinyfinances \
-              -p 3839:3838 \
-              $IMAGE_NAME
-
-            echo "✅ Déploiement terminé !"
+            bash ~/deploy_blue_green.sh shinyfinances
